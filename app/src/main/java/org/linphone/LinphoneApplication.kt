@@ -22,6 +22,8 @@ package org.linphone
 import android.annotation.SuppressLint
 import android.app.Application
 import android.content.Context
+import android.os.Build
+import androidx.annotation.RequiresApi
 import coil.ImageLoader
 import coil.ImageLoaderFactory
 import coil.decode.GifDecoder
@@ -116,6 +118,7 @@ class LinphoneApplication : Application(), ImageLoaderFactory {
         Log.i("[Application] Created")
     }
 
+    @RequiresApi(Build.VERSION_CODES.P)
     override fun newImageLoader(): ImageLoader {
         return ImageLoader.Builder(this)
             .components {
