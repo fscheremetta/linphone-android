@@ -1,3 +1,8 @@
+// 1 -  plugin essencial para qualquer app android
+// 2 - complilacao kotlin
+// 3 - processar anotaçoes em tempo real de complilacao
+// 4 - integrar o klint (formatacao pro kotlin)
+// 5 - plugin pra suporte adicional ao kotlin no desenv. android
 plugins {
     id 'com.android.application'
     id 'kotlin-android'
@@ -6,21 +11,25 @@ plugins {
     id 'org.jetbrains.kotlin.android'
 }
 
+// variaveis de configuração
+// nome da vers do app, codigo da versao do app, nome do aplicativo
 def appVersionName = "5.3.0"
 def appVersionCode = 52000
-
 def packageName = "org.linphone"
 
+// verificação de disponibilidade dos recursos
 def firebaseAvailable = new File(projectDir.absolutePath +'/google-services.json').exists()
-
 def crashlyticsAvailable = new File(projectDir.absolutePath +'/google-services.json').exists() && new File(LinphoneSdkBuildDir + '/libs/').exists() && new File(LinphoneSdkBuildDir + '/libs-debug/').exists()
 
+// verifica se as bibliotecas nativas devem ser extraidas do apk
 def extractNativeLibs = false
 
+// condicional que aplica firbase se tiver disponivel
 if (firebaseAvailable) {
     apply plugin: 'com.google.gms.google-services'
 }
 
+// task pra obter a versao do git, executa varios comando git pra verificar os commits
 def gitBranch = new ByteArrayOutputStream()
 task getGitVersion() {
     def gitVersion = appVersionName
@@ -58,10 +67,13 @@ task getGitVersion() {
     project.version = gitVersion
 }
 
+// usado pra definir e manipular conjuntos de dependencias no gradle
 configurations {
     customImplementation.extendsFrom implementation
 }
 
+// define uma tarefa pra fazer depois de todas as tarefas serem concluidas
+// com customização personalizada pra cada dependencia
 task linphoneSdkSource() {
     doLast {
         configurations.customImplementation.getIncoming().each {
@@ -74,9 +86,11 @@ task linphoneSdkSource() {
     }
 }
 
+// dependencias do prebuild, executa antes do codigo ser complilado
 project.tasks['preBuild'].dependsOn 'getGitVersion'
 project.tasks['preBuild'].dependsOn 'linphoneSdkSource'
 
+// configuração de complicação do android
 android {
     compileOptions {
         sourceCompatibility = 17
@@ -84,6 +98,8 @@ android {
     }
 
     compileSdkVersion 34
+
+    // configuraçao padrao para todas as variantes do app
     defaultConfig {
         minSdkVersion 23
         targetSdkVersion 34
@@ -92,6 +108,7 @@ android {
         applicationId packageName
     }
 
+    // personalizaçao pra cada variante de build do app
     applicationVariants.all { variant ->
         variant.outputs.all {
             outputFileName = "linphone-android-${variant.buildType.name}-${project.version}.apk"
@@ -117,6 +134,7 @@ android {
         }
     }
 
+    // cibfugyralçai de assubatyra para lançamento
     def keystorePropertiesFile = rootProject.file("keystore.properties")
     def keystoreProperties = new Properties()
     keystoreProperties.load(new FileInputStream(keystorePropertiesFile))
@@ -130,6 +148,7 @@ android {
         }
     }
 
+    // tipos de build
     buildTypes {
         release {
             minifyEnabled true
@@ -188,10 +207,13 @@ android {
         }
     }
 
+    // recursos de build
     buildFeatures {
+        // vincular componentes da UI diretamente aos dados de maneira declarativa
         dataBinding = true
     }
 
+    // nome do app
     namespace 'org.linphone'
     packagingOptions {
         jniLibs {
@@ -200,6 +222,7 @@ android {
     }
 }
 
+// lista de todas as lib e modulos que o projeto depende
 dependencies {
     implementation fileTree(dir: 'libs', include: ['*.jar'])
     implementation 'androidx.appcompat:appcompat:1.6.1'
@@ -257,6 +280,7 @@ dependencies {
     // debugImplementation 'com.squareup.leakcanary:leakcanary-android:2.10'
 }
 
+// manipula o arquivo contacts.xml para atualizar/modificar dados antes da construção
 task generateContactsXml(type: Copy) {
     from 'contacts.xml'
     into "src/main/res/xml/"
@@ -277,6 +301,7 @@ ktlint {
 
 project.tasks['preBuild'].dependsOn 'ktlintFormat'
 
+// executa tarefas adicionais se o crashlytics estiver disponivel
 if (crashlyticsAvailable) {
     afterEvaluate {
         assembleReleaseWithCrashlytics.finalizedBy(uploadCrashlyticsSymbolFileReleaseWithCrashlytics)
