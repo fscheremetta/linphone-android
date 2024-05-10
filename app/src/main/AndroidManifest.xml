@@ -1,61 +1,57 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
+<!-- Indica documento XML -->
 
-    <!-- To be able to display contacts list & match calling/called numbers -->
+
+    <!-- Permissão para acessar os usuários -->
     <uses-permission android:name="android.permission.READ_CONTACTS" />
-    <!-- For in-app contact edition -->
+    <!-- Permissão para modificar os usuarios -->
     <uses-permission android:name="android.permission.WRITE_CONTACTS" />
 
-    <!-- Helps filling phone number and country code in assistant -->
+    <!-- Acessar as informações sobre o estado do telefone, como o numero de telefone atual -->
     <uses-permission android:name="android.permission.READ_PHONE_STATE" />
 
-    <!-- Needed for auto start at boot and to ensure the service won't be killed by OS while in call -->
+    <!-- Permite que o aplicativo seja notificado quando o sistema terminar de inicializar apos o boot -->
     <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
 
-    <!-- Starting Android 13 we need to ask notification permission -->
+    <!-- Permissão a partir do android 13 para poder postar notificação -->
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS"/>
 
-    <!-- Needed for full screen intent in incoming call notifications -->
+    <!-- Interação completa com a tela -->
     <uses-permission android:name="android.permission.USE_FULL_SCREEN_INTENT" />
-    <!-- To vibrate when pressing DTMF keys on numpad & incoming calls -->
+    <!-- Fazer o celular vibrar -->
     <uses-permission android:name="android.permission.VIBRATE" />
 
-    <!-- Needed to attach file(s) in chat room fragment -->
+    <!-- Permissões ára ler e escrever no armazenamento externo -->
     <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE"
-        android:maxSdkVersion="32"/>
-    <!-- Starting Android 13 you need those 3 permissions instead (https://developer.android.com/about/versions/13/behavior-changes-13) -->
-    <uses-permission android:name="android.permission.READ_MEDIA_IMAGES" />
+        android:maxSdkVersion="32"/>  <uses-permission android:name="android.permission.READ_MEDIA_IMAGES" />
     <uses-permission android:name="android.permission.READ_MEDIA_VIDEO" />
     <uses-permission android:name="android.permission.READ_MEDIA_AUDIO" />
-
-    <!-- Needed to shared downloaded files if setting is on -->
     <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE"
         android:maxSdkVersion="28" />
 
-    <!-- Both permissions below are for contacts sync account, needed to store presence in native contact if enabled -->
+    <!-- Gerenciar contas no dispositivo -->
     <uses-permission android:name="android.permission.AUTHENTICATE_ACCOUNTS" />
     <uses-permission android:name="android.permission.GET_ACCOUNTS" />
 
-    <!-- Needed for Telecom Manager -->
+    <!-- Gerenciar chamadas e acessar numeros de telefone -->
     <uses-permission android:name="android.permission.MANAGE_OWN_CALLS"/>
     <uses-permission android:name="android.permission.READ_PHONE_NUMBERS" />
 
-    <!-- Needed for overlay -->
+    <!-- Criar sobreposição em cima de outros aplicativos -->
     <uses-permission android:name="android.permission.SYSTEM_ALERT_WINDOW" />
 
-    <!-- Needed to check current Do not disturb policy -->
+    <!--Acesso as politicas de nao perturbe -->
     <uses-permission android:name="android.permission.ACCESS_NOTIFICATION_POLICY" />
 
-    <!-- Needed for foreground service
-    (https://developer.android.com/guide/components/foreground-services) -->
+    <!-- Permissão para serviços em primeiro plano, que sao necessarios para certas funcionalidades -->
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE"/>
-    <!-- Needed for Android 14
-    https://developer.android.com/about/versions/14/behavior-changes-14#fgs-types -->
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE_CAMERA" />
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE_MICROPHONE" />
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE_PHONE_CALL" />
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE_DATA_SYNC" />
 
+    <!-- Sem backup, habilita o suporte para o botão de voltar, o locale config é das linguagens e por ultimo desabilita o tagging -->
     <application
         android:name=".LinphoneApplication"
         android:allowBackup="false"
@@ -66,31 +62,40 @@
         android:roundIcon="@mipmap/ic_launcher_round"
         android:theme="@style/AppTheme"
         android:allowNativeHeapPointerTagging="false">
-
+        <!-- Suporte Google Car -->
         <meta-data
             android:name="com.google.android.gms.car.application"
             android:resource="@xml/automotive_app_desc"/>
-
+        <!-- As activity definem uma atividade no aplicativo, que sao telas com interface de usuario -->
+        <!-- O launch mode define como a atividade é instanciada dentro da pilha de atividades do app -->
+        <!-- O windowSoftInputMode controla o comportamento da janela de entrada (como teclado) quando a activity ta ativa -->
         <activity android:name=".activities.main.MainActivity"
             android:exported="true"
             android:launchMode="singleTask"
             android:windowSoftInputMode="adjustResize"
             android:theme="@style/AppSplashScreenTheme">
+            <!-- Recurso do jetpack para especificar grafico de navegaçao -->
             <nav-graph android:value="@navigation/main_nav_graph" />
 
+            <!-- Os intent especificam os tipos de intentes que a atividade pode responder -->
+            <!-- Esse faz com que a entrada do aplicativo seja o main -->
+            <!-- E launcher é a atividade que deve ser listada no lançador de apps -->
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
 
+            <!-- Define shortcuts para o app -->
             <meta-data
                 android:name="android.app.shortcuts"
                 android:resource="@xml/shortcuts" />
 
+            <!-- Intent para ver um local específico, referente a localização -->
             <intent-filter>
                 <action android:name="android.intent.action.VIEW_LOCUS" />
             </intent-filter>
 
+            <!-- Intent de enviar conteúdo -->
             <intent-filter>
                 <action android:name="android.intent.action.SEND" />
                 <category android:name="android.intent.category.DEFAULT" />
@@ -100,7 +105,6 @@
                 <data android:mimeType="video/*" />
                 <data android:mimeType="application/*" />
             </intent-filter>
-
             <intent-filter>
                 <action android:name="android.intent.action.SEND_MULTIPLE" />
                 <category android:name="android.intent.category.DEFAULT" />
@@ -110,13 +114,13 @@
                 <data android:mimeType="application/*" />
             </intent-filter>
 
+            <!-- Intent para visualização de conteúdo e chamadas-->
             <intent-filter>
                 <action android:name="android.intent.action.VIEW" />
                 <category android:name="android.intent.category.BROWSABLE" />
                 <category android:name="android.intent.category.DEFAULT" />
                 <data android:mimeType="${linphone_address_mime_type}" />
             </intent-filter>
-
             <intent-filter>
                 <action android:name="android.intent.action.VIEW" />
                 <action android:name="android.intent.action.DIAL" />
@@ -132,6 +136,7 @@
                 <data android:scheme="linphone-config" />
             </intent-filter>
 
+            <!-- Intent para envio de mensagens, SMS e MMS -->
             <intent-filter>
                 <action android:name="android.intent.action.SEND" />
                 <action android:name="android.intent.action.SENDTO" />
@@ -143,9 +148,13 @@
             </intent-filter>
         </activity>
 
+        <!-- Aqui é a atividade do assistente do app-->
         <activity android:name=".activities.assistant.AssistantActivity"
             android:windowSoftInputMode="adjustResize"/>
 
+        <!-- Activity que lida com chamadas VOIP, com singleTask para abrir essa instancia e trazer ela pra frente -->
+        <!-- turnScreenOn e showWhenLocked para mostrar mesmo quando o dispositivo ta desligado e ligue a tela -->
+        <!-- Suporte PIP para ser usado "minimizado" junto com outros aplicativos -->
         <activity android:name=".activities.voip.CallActivity"
             android:launchMode="singleTask"
             android:turnScreenOn="true"
@@ -153,6 +162,7 @@
             android:resizeableActivity="true"
             android:supportsPictureInPicture="true" />
 
+        <!-- Gerencia o chat bubble -->
         <activity
             android:name=".activities.chat_bubble.ChatBubbleActivity"
             android:allowEmbedded="true"
@@ -161,6 +171,9 @@
 
         <!-- Services -->
 
+        <!-- Gerencia as tarefas centrais do app, exported é para nao ser acessado por outros app -->
+        <!-- O foreground define os serviços que pode usar em primeiro plano -->
+        <!-- O serviço é interrompido quando o usuario remove a tarefa associada ao aplicativo da lista de recentes -->
         <service
             android:name=".core.CoreService"
             android:exported="false"
@@ -168,6 +181,9 @@
             android:stopWithTask="false"
             android:label="@string/app_name" />
 
+        <!-- Gestão das notificações push, para receber mensagens em tempo real -->
+        <!-- Serve tambem para sincronização de dados em primeiro plano -->
+        <!-- stopWithTask: serviço interrompido se o usuario remove a tarefa associada ao app -->
         <service
             android:name="org.linphone.core.tools.service.PushService"
             android:exported="false"
@@ -175,6 +191,8 @@
             android:stopWithTask="false"
             android:label="@string/app_name" />
 
+
+        <!-- Tratamento de mensagens entre o firebase, so fica habilitado se deixar ele habilitado -->
         <service android:name="org.linphone.core.tools.firebase.FirebaseMessaging"
             android:enabled="${firebaseServiceEnabled}"
             android:exported="false">
@@ -183,6 +201,9 @@
             </intent-filter>
         </service>
 
+        <!-- Adaptador de sincronização para contatos, possibilitanto a integração da conta e sincronização e dados de cntt -->
+        <!-- É acessivel a outros app, necessario para que o sistema de sinc do android integraja cm ele-->
+        <!-- o meta-data define as configurações adicionais para o adaptador de sync e estrutura dos dados de contato -->
         <service
             android:name=".contact.DummySyncService"
             android:exported="true">
@@ -198,6 +219,9 @@
                 android:resource="@xml/contacts" />
         </service>
 
+        <!-- Gerencia a autenticação de contas, provavelmente vinculando conta de usuario no dispositivo ao app -->
+        <!-- Os itent configuram o serviço pra funcionar como um autenticador de contas, integrando com o gerenciador  -->
+        <!-- de contas do android -->
         <service android:name=".contact.DummyAuthenticationService"
             android:exported="true">
             <intent-filter>
@@ -209,6 +233,9 @@
                 android:resource="@xml/authenticator" />
         </service>
 
+        <!-- Especifico para telecomunicação, chamadas VOIP -->
+        <!-- A permissão concede acesso para o serviço gerenciar chamadas -->
+        <!-- Serviço precisa ser exportado para que o sistema integraja com ele -->
         <service android:name=".telecom.TelecomConnectionService"
             android:permission="android.permission.BIND_TELECOM_CONNECTION_SERVICE"
             android:exported="true">
@@ -219,6 +246,10 @@
 
         <!-- Receivers -->
 
+        <!-- São usados para ouvir e receber eventos de broadcast e compartilhar dados de forma segura entre os app -->
+
+        <!-- Ouve eventos de notificação push para o app, quando uma notificação push é recebida, ele é ativado -->
+        <!-- para processar a mensagem recebida, recebe a ação especifica ligado as notificações push -->
         <receiver android:name=".core.CorePushReceiver"
             android:exported="false">
             <intent-filter>
@@ -226,11 +257,14 @@
             </intent-filter>
         </receiver>
 
+        <!-- Gerencia integrações com notificações de usuario, como cliques em notificação ou ações similares -->
         <receiver
             android:name=".notifications.NotificationBroadcastReceiver"
             android:enabled="true"
             android:exported="false" />
 
+        <!-- É chamado apos o dispositivo ser iniciado ou quando o pacote é substituido/attt -->
+        <!-- Inicia serviços ou configurações necessarios apos o boot ou att do app -->
         <receiver android:name=".core.BootReceiver"
             android:exported="true">
             <intent-filter>
@@ -241,6 +275,9 @@
 
         <!-- Providers -->
 
+        <!-- É uma implementaao de ContentProvider que facilita a seguraçã na partilha de arquivos entre os app
+          authorities define um identificador unico para o provider do app
+         -->
         <provider
             android:name="androidx.core.content.FileProvider"
             android:authorities="${linphone_file_provider}"
