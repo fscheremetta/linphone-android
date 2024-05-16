@@ -19,61 +19,109 @@
  */
 package org.linphone.activities.main
 
+// gerenciar diálogos na interface do usuario
 import android.app.Dialog
+// permite a classe receber callback de mudança de config e outros eventos relacionados ao sistema
 import android.content.ComponentCallbacks2
+// contexto do app
 import android.content.Context
+// iniciar novas atividades e passar dados entre elas
 import android.content.Intent
+// informações de configuração sobre o dispositivo, como orientação de tela e tamanho
 import android.content.res.Configuration
+// representa identificador uniforme de recurso que pode ser usado para identificar dados dentro do app ou na net
 import android.net.Uri
+// passar dados entre as atividades
 import android.os.Bundle
+// interface para classes cujos objetos podem ser escritos e reconstruidos a partir de Parcel
 import android.os.Parcelable
+// constantes para posicionamento e alinhamento em layouts
 import android.view.Gravity
+// relatar movimentos (toques na tela)
 import android.view.MotionEvent
+// componentes de interface do usuario
 import android.view.View
+// gerencia a entrada e interação com campos de texto
 import android.view.inputmethod.InputMethodManager
+// indica um parametro, campo ou metodo e retorna um Id de recurso de string
 import androidx.annotation.StringRes
+// implementar tela de abertura para o app
 import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
+// exxecutar uma ação quando a view é anexada à janela
 import androidx.core.view.doOnAttach
+// fornece metodos para vincular componentes de UI com fontes de dados do app usando modelo declarativo
 import androidx.databinding.DataBindingUtil
+// view especializado para conter fragments
 import androidx.fragment.app.FragmentContainerView
+// classe de dados observael que possui valor mutavel
 import androidx.lifecycle.MutableLiveData
+// instanciar viewmodels associados a uma UI
 import androidx.lifecycle.ViewModelProvider
+// proporciona um coroutineScope ligado ao lifecycle
 import androidx.lifecycle.lifecycleScope
+// gerencia a navegação app entre destinos de um navhost
 import androidx.navigation.NavController
+// representa um destino dentro do sistema de navegação do android x
 import androidx.navigation.NavDestination
+// expansao para recuperar um navcontroller diretamente de uma view
 import androidx.navigation.findNavController
+// detectar recursos de dobra em dispositivs de tela dobrável
 import androidx.window.layout.FoldingFeature
+// carregar imagens usando a biblioteca coil
 import coil.imageLoader
+// leve forma de feedback ao usuario
 import com.google.android.material.snackbar.Snackbar
+// exceção usada quando a codificação de caracteres nao é suportada
 import java.io.UnsupportedEncodingException
+// decoficar uma string codigifaca para URL
 import java.net.URLDecoder
+// fornece funções matemáticas básicas
 import kotlin.math.abs
+// importa coroutines para escrever código assíncrono
 import kotlinx.coroutines.*
+// acesso as configurações globais e o estado do core do sistema de VOIP
 import org.linphone.LinphoneApplication.Companion.coreContext
+// acesso às preferências de usuario armazenadas globalmente, como login, UI
 import org.linphone.LinphoneApplication.Companion.corePreferences
+// recursos de definição do android
 import org.linphone.R
+// importa todas as classes de atividades
 import org.linphone.activities.*
+// importa a atividade de assistente
 import org.linphone.activities.assistant.AssistantActivity
+// importa os view models, que ajudam a separar a logica de negocio da logica de apresentação
 import org.linphone.activities.main.viewmodels.CallOverlayViewModel
 import org.linphone.activities.main.viewmodels.DialogViewModel
 import org.linphone.activities.main.viewmodels.SharedMainViewModel
+// função de navegação especifica para direcionar o usuario pra tela de discagem
 import org.linphone.activities.navigateToDialer
+// checar compatibilidade de recursos dependendo da vers. do android
 import org.linphone.compatibility.Compatibility
+// listener que reage a atualizações na lista de contatos
 import org.linphone.contact.ContactsUpdatedListenerStub
+// importações do core 
 import org.linphone.core.AuthInfo
 import org.linphone.core.AuthMethod
 import org.linphone.core.Core
 import org.linphone.core.CoreListenerStub
 import org.linphone.core.CorePreferences
 import org.linphone.core.tools.Log
+// classe gerada para a vinculação de dados com o XML
 import org.linphone.databinding.MainActivityBinding
+// utilitários
 import org.linphone.utils.*
 
 class MainActivity : GenericActivity(), SnackBarActivity, NavController.OnDestinationChangedListener {
+    // definições das models
+    // contem os dados 
     private lateinit var binding: MainActivityBinding
     private lateinit var sharedViewModel: SharedMainViewModel
+    // especifico para gerenciar a UI e o estado de sobreposição de chamadas
     private lateinit var callOverlayViewModel: CallOverlayViewModel
 
+    // define um listener que reage à atualização dos contatos, quando os contatos são atualizados
+    // verifica se há preferências especificas habilitadas para criar atalhos e, se true
+    // cria metodos de ajuda para criar atalhos para contatos ou salas de chat
     private val listener = object : ContactsUpdatedListenerStub() {
         override fun onContactsUpdated() {
             Log.i("[Main Activity] Contact(s) updated, update shortcuts")
@@ -85,15 +133,21 @@ class MainActivity : GenericActivity(), SnackBarActivity, NavController.OnDestin
         }
     }
 
+    // referÇencia dos fragmentos
+    // exibem diferentes seções da UI, aba de navegação e barra de status (na parte de cima do app)
     private lateinit var tabsFragment: FragmentContainerView
     private lateinit var statusFragment: FragmentContainerView
 
+    // gerenciar a posição de um overlay
     private var overlayX = 0f
     private var overlayY = 0f
     private var initPosX = 0f
     private var initPosY = 0f
     private var overlay: View? = null
 
+    // callback de componentes, implementa callback para gerenciar mudanças de configuração e eventos
+    // relacionados à memoria, por ex: quando o disposito esta com pouca memoria, ele pode limpar o cache
+    // para liberar recursos
     private val componentCallbacks = object : ComponentCallbacks2 {
         override fun onConfigurationChanged(newConfig: Configuration) { }
 
@@ -107,18 +161,25 @@ class MainActivity : GenericActivity(), SnackBarActivity, NavController.OnDestin
         }
     }
 
+    // é chamado quando há mudança de layout, quando um dispositivo dobravel é dobrado ou desdobrado
+    // isso afeta como a UI deve ser apresentado
     override fun onLayoutChanges(foldingFeature: FoldingFeature?) {
         sharedViewModel.layoutChangedEvent.value = Event(true)
     }
 
+    // determina se as abas devem ser visveis baseadas no destino atual da navegação
     private var shouldTabsBeVisibleDependingOnDestination = true
+    // controla a visibilidade das abas com base na orientação do dispositivo e se o teclado esta visivel ou não
     private var shouldTabsBeVisibleDueToOrientationAndKeyboard = true
 
+    // usado para transmitir eventos de autenticação que precisam ser tratados
     private val authenticationRequestedEvent: MutableLiveData<Event<AuthInfo>> by lazy {
         MutableLiveData<Event<AuthInfo>>()
     }
+    // dialogo opcional que é apresentado quando uma autenticação é requerida
     private var authenticationRequiredDialog: Dialog? = null
 
+    // ouvinte que responde a autenticação do linphone
     private val coreListener: CoreListenerStub = object : CoreListenerStub() {
         override fun onAuthenticationRequested(core: Core, authInfo: AuthInfo, method: AuthMethod) {
             if (authInfo.username == null || authInfo.domain == null || authInfo.realm == null) {
@@ -132,23 +193,28 @@ class MainActivity : GenericActivity(), SnackBarActivity, NavController.OnDestin
         }
     }
 
+    // uma lista de KeyboardVisibilityListener que são notificandos quando a visiblidade do teclado muda
     private val keyboardVisibilityListeners = arrayListOf<AppUtils.KeyboardVisibilityListener>()
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
         // Must be done before the setContentView
+        // instala a tela da splash
         installSplashScreen()
 
+        // configura a view com Data Binding
         binding = DataBindingUtil.setContentView(this, R.layout.main_activity)
         binding.lifecycleOwner = this
 
+        // inicializa os ViewModels
         sharedViewModel = ViewModelProvider(this)[SharedMainViewModel::class.java]
         binding.viewModel = sharedViewModel
 
         callOverlayViewModel = ViewModelProvider(this)[CallOverlayViewModel::class.java]
         binding.callOverlayViewModel = callOverlayViewModel
 
+        // observa eventos para alterar o menu lateral (drawer)
         sharedViewModel.toggleDrawerEvent.observe(
             this
         ) {
@@ -161,6 +227,7 @@ class MainActivity : GenericActivity(), SnackBarActivity, NavController.OnDestin
             }
         }
 
+        // observa as mudanças de erro na chamada para mostrar snackbar
         coreContext.callErrorMessageResourceId.observe(
             this
         ) {
@@ -169,6 +236,7 @@ class MainActivity : GenericActivity(), SnackBarActivity, NavController.OnDestin
             }
         }
 
+        // observa os eventos de autenticação
         authenticationRequestedEvent.observe(
             this
         ) {
@@ -177,15 +245,18 @@ class MainActivity : GenericActivity(), SnackBarActivity, NavController.OnDestin
             }
         }
 
+        // inicializa a atividade de assistencia se for o primeiro acesso
         if (coreContext.core.accountList.isEmpty()) {
             if (corePreferences.firstStart) {
                 startActivity(Intent(this, AssistantActivity::class.java))
             }
         }
 
+        // localiza os fragmentos na UI
         tabsFragment = findViewById(R.id.tabs_fragment)
         statusFragment = findViewById(R.id.status_fragment)
 
+        // relata quando a UI está totalmente desenhada
         binding.root.doOnAttach {
             Log.i("[Main Activity] Report UI has been fully drawn (TTFD)")
             try {
@@ -196,6 +267,7 @@ class MainActivity : GenericActivity(), SnackBarActivity, NavController.OnDestin
         }
     }
 
+    // trata novos intents recebidos pela atividade
     override fun onNewIntent(intent: Intent?) {
         super.onNewIntent(intent)
 
@@ -205,22 +277,26 @@ class MainActivity : GenericActivity(), SnackBarActivity, NavController.OnDestin
         }
     }
 
+    // adiciona ouvintes aos gerenciados de contato e core
     override fun onResume() {
         super.onResume()
         coreContext.contactsManager.addListener(listener)
         coreContext.core.addListener(coreListener)
     }
 
+    // remove os ouvintes para evitar vazamentos de memoria quando a atividade nao esta visivel
     override fun onPause() {
         coreContext.core.removeListener(coreListener)
         coreContext.contactsManager.removeListener(listener)
         super.onPause()
     }
 
+    // mostra a snackbar com mensagem
     override fun showSnackBar(@StringRes resourceId: Int) {
         Snackbar.make(findViewById(R.id.coordinator), resourceId, Snackbar.LENGTH_LONG).show()
     }
 
+    // snackbar com ação
     override fun showSnackBar(@StringRes resourceId: Int, action: Int, listener: () -> Unit) {
         Snackbar
             .make(findViewById(R.id.coordinator), resourceId, Snackbar.LENGTH_LONG)
@@ -231,10 +307,15 @@ class MainActivity : GenericActivity(), SnackBarActivity, NavController.OnDestin
             .show()
     }
 
+    // snackbar com mensagem
     override fun showSnackBar(message: String) {
         Snackbar.make(findViewById(R.id.coordinator), message, Snackbar.LENGTH_LONG).show()
     }
 
+    // é chamado depois que a atividade é criada e a UI é totalmente processada
+    // utilizado para registrar callbacks de componentes, adicionar listeners de mudanças de destino
+    // na navegação e configurar um ouvinte de visibilidade do teclado para ajustar elementos da UI
+    // inicia qualquer sobreposição necessária e trata intents que podem ter sido entregues à atividade
     override fun onPostCreate(savedInstanceState: Bundle?) {
         super.onPostCreate(savedInstanceState)
 
@@ -262,12 +343,17 @@ class MainActivity : GenericActivity(), SnackBarActivity, NavController.OnDestin
         }
     }
 
+    // chamado quando a atividade esta sendo desmontada, limpa os listener de navegação e callbacks
+    // de componentes para evitar vazamentos de memória
     override fun onDestroy() {
         findNavController(R.id.nav_host_fragment).removeOnDestinationChangedListener(this)
         unregisterComponentCallbacks(componentCallbacks)
         super.onDestroy()
     }
 
+    // método é um ouvinte p/ mudanças de destino na navegação dentro do app, ajusta a visibilidade do 
+    // teclado e de fragmentos com base no destino atual
+    // serve pra responsividade
     override fun onDestinationChanged(
         controller: NavController,
         destination: NavDestination,
@@ -286,18 +372,22 @@ class MainActivity : GenericActivity(), SnackBarActivity, NavController.OnDestin
         updateTabsFragmentVisibility()
     }
 
+    // ouvinte a lista de keyboardvisibilitylisteners, são notificados quando a visibilidade do teclado muda
     fun addKeyboardVisibilityListener(listener: AppUtils.KeyboardVisibilityListener) {
         keyboardVisibilityListeners.add(listener)
     }
 
+    // remove um ouvinte da lista
     fun removeKeyboardVisibilityListener(listener: AppUtils.KeyboardVisibilityListener) {
         keyboardVisibilityListeners.remove(listener)
     }
 
+    // esconder o teclado se ouver algum componente na tela com foco
     fun hideKeyboard() {
         currentFocus?.hideKeyboard()
     }
 
+    // mostra o teclado se houver algum componente na tela com foco
     fun showKeyboard() {
         // Requires a text field to have the focus
         if (currentFocus != null) {
@@ -308,20 +398,25 @@ class MainActivity : GenericActivity(), SnackBarActivity, NavController.OnDestin
         }
     }
 
+    // controla a visibilidade do fragmento status 
     fun hideStatusFragment(hide: Boolean) {
         statusFragment.visibility = if (hide) View.GONE else View.VISIBLE
     }
 
+    // atualiza a visibilidade das tabs com base na condição de visibilidade do destino atual e orientação
+    // do dispositivo ou visibilidade do teclado
     private fun updateTabsFragmentVisibility() {
         tabsFragment.visibility = if (shouldTabsBeVisibleDependingOnDestination && shouldTabsBeVisibleDueToOrientationAndKeyboard) View.VISIBLE else View.GONE
     }
 
+    // lida com as atividades de intents
     private fun handleIntentParams(intent: Intent) {
         Log.i(
             "[Main Activity] Handling intent with action [${intent.action}], type [${intent.type}] and data [${intent.data}]"
         )
 
         when (intent.action) {
+            // trata o intent da main, que é lançar a activity principal sem parâmetros
             Intent.ACTION_MAIN -> handleMainIntent(intent)
             Intent.ACTION_SEND, Intent.ACTION_SENDTO -> {
                 if (intent.type == "text/plain") {
